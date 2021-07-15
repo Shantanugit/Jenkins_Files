@@ -1,0 +1,16 @@
+pipeline {
+   agent any
+   environment {
+       DISABLE_AUTH = 'true'
+       ENABLE_AUTH = 'false'
+   }
+   stages {
+       stage("Build") {
+           steps {
+               echo env.DISABLE_AUTH
+               echo env.ENABLE_AUTH
+           }
+       }
+   }
+}
+
