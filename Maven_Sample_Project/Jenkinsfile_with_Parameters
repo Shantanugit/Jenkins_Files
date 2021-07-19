@@ -1,0 +1,52 @@
+pipeline {
+    agent any
+    parameters {
+        string(name: 'username', defaultValue: 'Amitsony', description: 'It is Mandotory')
+        choice(name: 'VERSION', choices: ['1.0.12', '1.0.14', '1.0.15'], description: '')
+        booleanParam(name: 'testcases', defaultValue: 'true', description: 'This is also Mandotory')
+    }
+    
+    stages {
+        stage("Build") {
+            steps {
+              git 'https://github.com/Shantanugit/tomcatproject.git'  
+            }
+        }
+        
+        stage("Code Review") {
+            steps {
+                sh 'mvn -P metrics checkstyle:checkstyle pmd:pmd'
+            }
+        }
+        
+        stage("Code Test") {
+            when {
+                expression {
+                    params.testcases == true
+                }
+            }
+            
+            steps {
+                sh 'mvn test'
+            }
+        }
+        
+        stage("Code Coverage") {
+            steps {
+                sh 'mvn cobertura:cobertura'
+            }
+        }
+        
+        stage("Code Package") {
+            steps {
+                sh 'mvn package'
+            }
+        }
+        
+        stage("Code Install") {
+            steps {
+                sh 'mvn clean install'
+            }
+        }
+    }
+}
