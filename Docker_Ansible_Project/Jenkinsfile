@@ -1,0 +1,51 @@
+pipeline {
+    agent any
+    environment {
+        workdir = 'cd /root/myimages/'
+        buildimage = 'docker image build -t $JOB_NAME:$BUILD_NUMBER /root/myimages/'
+        imagetag = 'docker image tag $JOB_NAME:$BUILD_NUMBER shantanudocker1/$JOB_NAME:$BUILD_NUMBER'
+        imagetaglatest = 'docker image tag $JOB_NAME:$BUILD_NUMBER shantanudocker1/$JOB_NAME:latest'
+        dockerlogin = 'docker login -u shantanudocker1'
+        imagepush = 'docker image push shantanudocker1/$JOB_NAME:$BUILD_NUMBER'
+        imagelatestpush = 'docker image push shantanudocker1/$JOB_NAME:latest'
+        runplaybook = 'ansible-playbook /root/myplay/myplay.yml'
+    }
+    stages {
+        stage("Git Clone") {
+            steps {
+                git 'https://github.com/Shantanugit/myrepo.git'
+            }
+        }
+        
+        stage("Copy Files to docker Host") {
+            steps {
+                sh 'scp -ivh /var/lib/jenkins/workspace/mypipe/Dockerfile root@172.31.6.222:/root/myimages'
+                sh 'scp -ivh /var/lib/jenkins/workspace/mypipe/index.html root@172.31.6.222:/root/myimages'
+            }
+        }
+        
+        stage("Build Image on remote Machine") {
+            steps {
+               withCredentials([string(credentialsId: 'dockerhubpasswd', variable: 'dockerhubpasswd')]) {
+                 sshagent(['keyname']) {
+                    sh "ssh -o StrictHostKeyChecking=no root@172.31.6.222 ${workdir}"
+                    sh "ssh -o StrictHostKeyChecking=no root@172.31.6.222 ${buildimage}"
+                    sh "ssh -o StrictHostKeyChecking=no root@172.31.6.222 ${imagetag}"
+                    sh "ssh -o StrictHostKeyChecking=no root@172.31.6.222 ${imagetaglatest}"
+                    sh "ssh -o StrictHostKeyChecking=no root@172.31.6.222 ${dockerlogin} -p ${dockerhubpasswd}"
+                    sh "ssh -o StrictHostKeyChecking=no root@172.31.6.222 ${imagepush}"
+                    sh "ssh -o StrictHostKeyChecking=no root@172.31.6.222 ${imagelatestpush}"
+                }
+            }    
+            }
+        }
+        
+        stage("Deployment") {
+            steps {
+                sshagent(['keyname']) {
+                sh "ssh -o StrictHostKeyChecking=no root@172.31.92.92 ${runplaybook}"
+                }
+            }
+        }
+    }
+}
