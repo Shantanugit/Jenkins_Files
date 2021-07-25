@@ -69,7 +69,7 @@ pipeline {
                         sh "ssh -o strictHostKeyChecking=no root@172.31.56.169 ${imagetaglatest}"
                         sh "ssh -o strictHostKeyChecking=no root@172.31.56.169 ${dockerlogin} -u ${myuser} -p ${mypass}"
                         sh "ssh -o strictHostKeyChecking=no root@172.31.56.169 ${imagepush}"
-                        sh "ssh -o strictHostKeyChecking=no root@172.31.56.169 ${impushlatest}"
+                        sh "ssh -o strictHostKeyChecking=no root@172.31.56.169 ${imagepushlatest}"
                         sh "ssh -o strictHostKeyChecking=no root@172.31.56.169 ${imageremove}"
                     }
                 }
